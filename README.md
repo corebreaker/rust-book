@@ -54,6 +54,14 @@ Le code 1 compile mais le code 2 compile aussi mais un warning disant que la var
 - La commande `cargo` se lance dans n'importe quel sous-répertoire du projet
 - `cargo build --release`
 
+# Documentation
+- Doc en local `rustup doc`
+
+# Variables
+- Les variables doivent être initialisées
+
+# Conventions
+
 # Expressions
 - La méthode `unwrap` d'un résultat (`Result`) peut être utilisées pour pouvoir compiler sans erreur lorsqu'on ne veut pas utilisé le résultat, que ce soit la valeur ou l'errur.
 Car Rust nous oblige d'utiliser le résultat, la méthode `wrap` étouffe la valeur de retour, que ce soit une donnée pour un retour de variante `Ok` ou une erreur pour un retour de variante `Err`.
@@ -71,21 +79,21 @@ Voici l'équivalent en Rust
 
 # Types
 **Page 49**
-| Type              | Description               | Exemples                                                           |
-|:-----------------:|:-------------------------:|--------------------------------------------------------------------|
-| i8, i16, i32, i64 | Entier signé              | -120, 1000, 1_000, 0x10, -0o12, 0b10, 0b_0111_1111, -1i8, 10_i16   |
-| u8, u16, u32, u64 | Entier non-signé          | b'X', 5, 2_000, 0x11, 0o10, 0b10, 0b_1111_1111_1111, 5u16, 501_u32 |
-| isize, usize      | Mot machine               | 1, 10usize, 1234_isize                                             |
-| bool              | Booléen                   | true, false                                                        |
-| f32, f64          | Flottant                  | 1., 1e-23, 3.5f32, 1234_f64                                        |
-| char              | Caractère                 | 'A', '\x22', '\u{00012c}'                                          |
-| &str              | Chaine à taille fixe      | "Hello Alain", "Yes \x32 \t \u{3f}"                                |
-| String            | Chaine à taille variable  | "Hello Alain".to_string(), "Yes \x32 \t \u{3f}".to_string()        |
-| enum              | Énumération               | enum WeekEnd { Saturday, Sunday }, enum Wait { OnTime, Late(u32) } |
-| &T                | Référence partagée        | let z: &i64 = &x;                                                  |
-| &mut T            | Référence mutable         | let &mut x                                                         |
-| Box<T>            | Boite (pointeur sur heap) | Box::new(1_i32)                                                    |
-| [T; n]            | Tableau (Array)           |                                                                    |
+| Type                    | Description               | Exemples                                                           |
+|:-----------------------:|:-------------------------:|--------------------------------------------------------------------|
+| i8, i16, i32, i64, i128 | Entier signé              | -120, 1000, 1_000, 0x10, -0o12, 0b10, 0b_0111_1111, -1i8, 10_i16   |
+| u8, u16, u32, u64, u128 | Entier non-signé          | b'X', 5, 2_000, 0x11, 0o10, 0b10, 0b_1111_1111_1111, 5u16, 501_u32 |
+| isize, usize            | Mot machine               | 1, 10usize, 1234_isize                                             |
+| bool                    | Booléen                   | true, false                                                        |
+| f32, f64                | Flottant                  | 1., 1e-23, 3.5f32, 1234_f64                                        |
+| char                    | Caractère                 | 'A', '\x22', '\u{00012c}'                                          |
+| &str                    | Chaine à taille fixe      | "Hello Alain", "Yes \x32 \t \u{3f}"                                |
+| String                  | Chaine à taille variable  | "Hello Alain".to_string(), "Yes \x32 \t \u{3f}".to_string()        |
+| enum                    | Énumération               | enum WeekEnd { Saturday, Sunday }, enum Wait { OnTime, Late(u32) } |
+| &T                      | Référence partagée        | let z: &i64 = &x;                                                  |
+| &mut T                  | Référence mutable         | let &mut x                                                         |
+| Box<T>                  | Boite (pointeur sur heap) | Box::new(1_i32)                                                    |
+| [T; n]                  | Tableau (Array)           |                                                                    |
 
 - Le préfixe `i` pour `i8`, `isize`, etc. spécifie un type entier signé
 - Le préfixe `u` pour `u8`, `usize`, etc. spécifie un type entier non-signé
@@ -139,6 +147,7 @@ let c: i64 = 1;     // Le littéral «1» aura le type `i64` par inférence de t
 let d = 123;        // La variable `d` aura le type `i32` par inférence de type et parce que le type entier par défaut est `i32`
 let e = 12.3;       // La variable `e` aura le type `f64` par inférence de type et parce que le type entier par défaut est `f64`
 ```
+- le module `std::convert` sert à faire des conversions automatiques (**TODO**: exemple)
 
 # Tuples
 - Les parenthèses sont obligatoires, ce qui permet d'éviter la confusion lors des appels de fonctions: `f((1, "Voilà"))` à ne pas confondre avec `f(1, "Voilà")` qui change la signature de la fonction
@@ -152,52 +161,66 @@ contrairement au type `void` des autres language qui lui n'a pas de valeur et do
     
 # Erreurs
 - ***TODO:*** faire une macro try/catch
+- Le type `Option<T>` est vraiment utile et synthétique pour vérifier une valeur vide en retour d'une opération.
+Par exemple C, il faut passer un pointeur en paramètre de la fonction et vérifier la valeur de retour, il y a donc 2 informations:
+```C
+bool popValue(List *lst, int *resultValue) {
+    int size = getListSize(lst);
 
-# Documentation
-- Doc en local `rustup doc`
+    if ( size == 0 ) {
+        return false;
+    }
+
+    // Valeur retournée
+    *resultValue = getListIntValue(lst, size - 1);
+    removeListValueAt(lst, size - 1);
+
+    return true;
+}
+
+int showInfo(Table *t, int defaultValue) {
+    // Obligation de déclarer une variable pour recevoir le résultat
+    int resultat;
+
+    // Il faut vérifier l'existence
+    if getValue(t, "info", &resultat)
+        printf("Found Info: %d\n", resultat);
+    else 
+        resultat = defaultValue;
+
+    return resultat;
+}
+```
+
+En rust, le même programme est plus simple car la même valeur va simplement être interprétée de 2 façons suivant que la liste est vide ou non:
+```rust
+fn popValue(&mut lst: &mut Vec<i64>) -> Option<i64> {
+    let size = lst.len();
+
+    if size == 0 {
+        return None;
+    }
+
+    Ok(lst.remove(size - 1))
+}
+
+fn showInfo(&mut lst: &mut Vec<i64>, defaultValue: i64) -> i64 {
+    match popValue(lst) {
+        Ok(resultat) => {
+            println!("Found Info: {}", resultat);
+
+            resultat
+        },
+        None => defaultValue
+    }
+}
+```
 
 # Macros
 ***TODO:*** Importation et accès aux fonctions publiées -> ok
 Mais pour les macros -> comment ?
 
-# Closures
-- Le type à utiliser sur une variable pour les closures est
-    - Arguments et type de retour: `Box<dyn Fn({args}) -> {retour}>`
-    - Juste les arguments: `Box<dyn Fn({args})>`
-    - Juste le type de retour: `Box<dyn Fn() -> {retour}>`
-    - Sans argument et retour: `Box<dyn Fn()>`
-- Les accollades ne sont pas nécessaires
-```rust
-let f = |x| x + 1;
-```
-Sauf si on spécifie le type de retour:
-```rust
-let f = |x| -> i64 { x + 1 }; // Accolades obligatoires
-```
 
-- Les types sont inférés contrairement à une fonction:
-```rust
-(|x| x + 1)(1234_i64);
-(|x: i64| -> i64 { x + 1 })(1234);
-(|x: i64| x + 1)(1234);
-```
-# Variables
-- Les variables doivent être initialisées
-
-# Multithread
-- Rust va interdire:
-    - que 2 threads modifient une même donnée
-    - qu'une valeur qui n'est plus utilisée ou nettoyée ne soit modifiée
-Tout ce ceci évite à 100% les conflits de données
-- Rust garantit une programmation multithread 100% sûre (safe):
-    - Même si la partie qui crée les threads sont dans une lib (comme les framework web), toute les développements qui utilise cette lib ne seront pas obliger à assurer la concurence d'accès aux données.
-    Rust le fait naturellement, ce n'est pas à ajouter.
-    - Pas de besoin de faire une version thread-safe d'un objet, en Rust tout est naturellement thread-safe.
-    En Java à des tableaux associatifs (`java.util.HashMap`) comme Vector qui ne sont pas thread-safe.
-    Oracle a dû introduire une version thread-safe pour leur collections, pour les tableaux associatifs il faut utiliser `java.util.concurrent.ConcurrentHashMap`.
-    Les 2 versions (thread-safe et classique) co-existent dans la bibliothèque standard de Java.
-    En Rust, il est impossible de développer quelque chose qui n'est pas thead-safe.
-    
 # Blocs
 On peut utiliser un bloc pour limiter la durée de vie d'une variable:
 ```rust
@@ -219,6 +242,525 @@ fn main() {
 }
 ```
 Cela éviter de poluer le code avec des variables qu'on utilise plus.
+
+
+# Fonctions
+## Fonction sans environnement
+Une fonction sans environnement (ou plus simplement, une fonction) doit obligatoirement spécifier les types dans sa signature
+```rust
+fn my_inc(i: i32) -> i32 {
+    if i < 0 {
+        return (-i) + 1;
+    }
+    
+    i + 1
+}
+```
+
+La dernière valeur est une valeur retournée, donc la fonction précédente est equivalente à:
+```rust
+fn my_inc(i: i32) -> i32 {
+    if i < 0 {
+        return (-i) + 1;
+    }
+    
+    return i + 1; // Ici, l'instruction `return` est déconseillée, la valeur seule en dernier est préférée
+}
+```
+
+L'instruction `return` est obligatoire pour les ruptures du flow d'exécution, mais il faut éviter son utilisation autant que possible pour améliorer la lisibilité du code.
+Ainsi, la version suivante de la fonction est préférable:
+```rust
+fn my_inc(i: i32) -> i32 {
+    if i < 0 {
+        (-i) + 1
+    } else { 
+        i + 1
+    }
+}
+```
+
+On peut encore factoriser, mais cette version rend le code beaucoup plus syntétique mais moins souple:
+```rust
+fn my_inc(i: i32) -> i32 {
+    (if i < 0 {-i} else {i}) + 1
+}
+```
+
+Cette version a pourtant l'avantage d'être très lisible.
+
+Les paramètres peuvent être modifiable en ajoutant un `mut`:
+```rust
+fn my_inc(mut i: i32) -> i32 {
+    if (i < 0) {
+        i = -i;
+    }
+
+    i + 1
+}
+```
+
+Ce qui évite aussi d'utiliser une instruction `return`.
+
+Attention, le paramètre n'étant pas une référence mutable (`&'mut`), la modification ne sera pas conservée après l'appel de la fonction:
+```rust
+let x = -3;
+let r = my_inc(x);
+
+assert_eq(x, -3);
+assert_eq(r, 4);
+```
+
+Ceci serait différent si la fonction était définie ainsi:
+```rust
+fn my_inc_mut(i: &mut i32) -> i32 {
+    if (i < 0) {
+        *i = -*i;
+    }
+
+    *i + 1
+}
+```
+
+Ici la valeur accepte un passage par référence et donc la valeur sera modifiée après l'appel:
+```rust
+let mut x = -3;
+let r = my_inc_mut(&mut x);
+
+assert!(x == 3);
+assert!(r == 4);
+```
+
+Pour terminer sur cette section, il est utile de dire que tout ce qui est vrai pour ce genre de fonction est vrai pour une méthode,
+car une méthode est une fonction sans environnement comme par exemple la méthode `Vec::push`.
+
+
+## Elements imbriqués dans une fonction
+Quasiment tout élémént qu'on trouve au premier d'imbrication d'un fichier peut être inclus dans une fonction:
+```rust
+fn nest_all() {
+    use std::collections::HashSet;
+    
+    struct X(HashSet<i32>);
+    
+    impl X {
+        fn new() -> Self {
+            let mut s = HashSet::new();
+            
+            s.insert(123);
+            Self(s)
+        }
+    }
+    
+    fn do_nested() {
+        let r = X::new();
+        
+        println!("Val = {:?}", r.0);
+    }
+    
+    do_nested();
+}
+```
+
+## Type "fonction"
+Le nom de la fonction sert de variable, une fonction est une valeur de type `fn`, la fonction `my_inc` est type `fn(i32) -> i32`, le type est quelque sorte sa signature.
+Ainsi une variable peut recevoir une fonction comme valeur:
+```rust
+let a_func = my_inc;
+```
+
+De même, une fonction peut être passée en paramètre:
+```rust
+fn call_func(f: fn(i32) -> i32) {
+    println!("Result of Call: {}", f(1234));
+}
+```
+
+
+## Fonctions génériques
+Comme tout type, une fonction peut avoir des types en paramètre par la définition de fonctions génériques.
+```rust
+use std::ops::Add;
+
+fn my_generic_add<T: Add<Output=T>>(a: T, b: T) -> T {
+    a + b
+}
+```
+
+Ici c'est la définition d'une fonction générique qui permet de faire l'addition de 2 valeurs pour autant que ces valeurs implémentent l'addition.
+En effet, on demande à la fonction d'accepter uniquement des valeurs qui implementent le trait `std::ops::Add<Output=T>`. C'est ce trait qui est d'ailleurs utilisé pour permettre à une valeur d'utiliser l'operateur `+`.
+C'est pour cela qu'on peut utiliser l'opérateur `+` (avec `a + b`).
+Sans cette restriction, on aurrait pas pu utiliser cette expression `a + b` car le compilateur Rust va nous obliger à utiliser ce genre de variable pour pouvoir utiliser cet opérateur.
+
+Rust va inférer les types ainsi on peut appeler la fonction ainsi:
+```rust
+let v1 = my_generic_add(1, 2); // T == i32
+let v2 = my_generic_add(1.5, 2.5); // T == f64
+```
+
+Mais on peut spécifier le type:
+```rust
+let v1 = my_generic_add::<usize>(1, 2); // T == usize
+```
+
+Le nom de la fonction est en fait: `my_generic_add::<T>`.
+
+
+Cette version est, somme toute pas trop générique car elle ne peut accepter que des valeurs d'un même type pour une valeur retounée aussi du même type:
+```rust
+let ex1 = my_generic_add(1, 2); // 2 entiers i32 et retourne un entier i32
+let ex2 = my_generic_add(1.5, 2.5); // 2 flottants f64 et retourne un flottant 1234_f64
+let ex3 = my_generic_add(1, 2.5); // Erreur, les 2 arguments sont de types différents
+```
+
+Rust est à ce niveau, suffisament riche pour définir une fonction encore plus générique:
+```rust
+use std::ops::Add;
+
+fn my_hyper_generic_add<R, B, A: Add<B, Output=R>>(a: A, b: B) -> R {
+    a + b
+}
+```
+
+Ici, la fonction `my_hyper_generic_add` peut potentionnellement accepter 2 types différents comme argument et avec une addition qui retourne un 3ème type. Mais ceci ne fonctionne pas.
+
+Le compilateur indique alors `no implementation for '{integer} + {float}'`. Effectivent le problème est que le type entier (i32) n'implémente qu'une addition dont les 2 opérandes sont du même type.
+Pour que cela soit exploitable, il faudrait un type qui implemente ce genre d'addition hétérogène comme ceci:
+```rust
+struct X(i32);
+
+impl Add<f64> for X {
+    type Output = u16;
+
+    fn add(self, rhs: f64) -> u16 {
+        (self.0 as u16) + (rhs as u16)
+    }
+}
+
+let ex4 = my_hyper_generic_add(X(1), 2.5); // Cela fonctionne et la variable `ex4` est de type u16
+```
+
+Malgré cela, si on l'appelle avec des arguments de même type, cela fonctionne car cette version est tout de même moins restrictive:
+```rust
+let ex5 = my_hyper_generic_add(1, 2); // 2 entiers i32 et retourne un entier i32
+```
+
+Simplement, les type `A`, `B` et `R` auront le même type.
+Pour régler le problème avec les type primitifs, on peut "légèrement" changer la fonction pour intégrer les conversions de types comme cela:
+```rust
+use num_traits::AsPrimitive;
+
+fn my_hyper_generic_add<R: Copy+'static, A: Add<Output=A>+AsPrimitive<R>+Copy+'static, B: AsPrimitive<A>>(a: A, b: B) -> R {
+    (a + b.as_()).as_()
+}
+
+let ex6: u16 = my_hyper_generic_add(1, 2.5); // Cela fonctionne, maintenant !
+```
+
+Cela fonctionne car même on rend homogène les types sur l'addition en faisant des conversions de type sur les valeurs.
+Par contre l'entête de la fonction devient horrible. Il y a un moyen de la réécrire pour la rendre un peu plus lisible comme cela:
+```rust
+fn my_hyper_generic_add<A, B, R>(a: A, b: B) -> R
+    where R: Copy + 'static,
+          A: Add<Output=A> + AsPrimitive<R> + Copy + 'static,
+          B: AsPrimitive<A> {
+    (a + b.as_()).as_()
+}
+```
+
+Les clauses `where` sont fréquentes puisque Rust demande beaucoup de description sur les types.
+Le système de typage de Rust permet beaucoup de richesse et de flexibilité mais cela implique aussi beaucoup de rigueur.
+
+
+## Fonction avec environnement: Closures
+- Le type à utiliser sur une variable pour les closures est
+    - Arguments et type de retour: `Box<dyn Fn({args}) -> {retour}>`
+    - Juste les arguments: `Box<dyn Fn({args})>`
+    - Juste le type de retour: `Box<dyn Fn() -> {retour}>`
+    - Sans argument et retour: `Box<dyn Fn()>`
+- Les accollades ne sont pas nécessaires si on ne spécifie pas le type de retour, elle sont obligatoire sinon, même si le corps de la closure ne contient que la valeur retournée.
+```rust
+let f = |x| x + 1;
+```
+Sauf si on spécifie le type de retour:
+```rust
+let f = |x| -> i64 { x + 1 }; // Accolades obligatoires
+```
+
+- Les types sont inférés contrairement à une fonction (sans environnement), il n'est pas nécessaire de spécifier les types si le compilateur peut inférer les types:
+```rust
+(|x| x + 1)(1234_i64);
+(|x: i64| -> i64 { x + 1 })(1234);
+(|x: i64| x + 1)(1234);
+```
+
+Sinon le compilateur demandera de spécifier le type s'il ne peut pas l'inférer.
+
+Bien sûr, une closure n'est pas du même ordre qu'une `lambda` en Python, une closure peut contenir un bloc d'instruction.
+```rust
+let local_inc = |x| {
+    println!("Param = {}", x);
+    
+    x + 1
+};
+```
+
+Ainsi une closure est une fonction un peut spéciale, car elle diffère d'une simple fonction comme on verra plus bas.
+
+
+### Capture de l'environnement
+La principale différence entre une fonction (dite fonction sans environnement) et une closure (qui est justement une fonction avec environnement), c'est qu'une closure peut capturer son environnement.
+Cela veut dire que le corps d'une closure va pouvoir utiliser une variable qui en-dehors de sa définition:
+```rust
+let extern_var = 1000;
+let my_add = |x| extern_var + x;
+
+assert!(my_add(200) == 1200);
+```
+
+La capture de variable est la terminologie employée dans ce genre de situation car la variable, ou plus exactement sa possession va être transférée dans l'environnement d'exécution de la closure (environnement lors de l'appel).
+
+
+### Transfert de possession
+Sur l'exemple précédent tout ce passe bien car la variable `extern_var` a un type primitif, ici elle est de type `i32`. Et ces types implementent le trait `Copy`.
+Mais en réalité, la possession de la valeur doit être transférée de la variable externe `extern_var` dans la closure.
+Ici, le compilateur n'est pas content:
+```rust
+let extern_var = "Prefix:".to_string();
+let my_concat = |x| extern_var + x;
+
+println!("External variable: {}", extern_var); // Erreur ici
+assert!(my_concat(200) == 1200);
+```
+
+Le `println!()` utilise la variable `extern_var` alors que la possession a été tranférée dans la closure, même si la closure est utilisée après le `println!()`, la possession a bien été transférée au moment de la définition de la closure.
+Pour palier au problème, il suffit de copier la valeur soit avant la définition de la closure:
+```rust
+let extern_var = "Prefix:".to_string();
+let var_copy = extern_var.clone();
+let my_concat = |x| extern_var.clone() + x;
+
+println!("External variable: {}", var_copy); // Ici, il n'y a plus d'erreur
+assert!(my_concat(200) == 1200);
+```
+
+Soit dans la définition de la closure:
+```rust
+let extern_var = "Prefix:".to_string();
+let my_concat = |x| extern_var.clone() + x;
+
+println!("External variable: {}", extern_var); // Il n'y plus d'erreur non plus
+assert!(my_concat(200) == 1200);
+```
+
+En fait, la méthode `clone` dans la closure, va utiliser une référence sur la variable `extern_var`. La possession n'est alors plus du tout transférée, il y a un emprunt. Ce qui évite aussi le problème de compilation.
+On peut donc éviter le transfert de possession via une référence, car au lieu du transfert de possession, il y a emprunt;
+```rust
+let extern_var = "Fred".to_string();
+let my_eq = |x| (&extern_var) == x;
+
+println!("External variable: {}", extern_var);
+println!("Is equals: {}", my_eq("Fred"));
+```
+
+
+## Type "fonction" et closures
+Une closure a un type particulier. Par exemple, pour la précédente closure la variable `my_eq` a un type assez étrange: `[fn(String) -> String; String]`.
+Le dernier type `String` est en fait le type de la variable externe `extern_var`. En fait, le compilateur va contruire un type spécial pour chaque closure qui embarque l'environnement externe.
+D'ailleurs le compilateur, n'affiche pas réellement cela, il affiche plûtot ce genre d'informations comme son type closure: `[closure@src/main.rs:11:14: 11:61 extern_var:_]`.
+
+Autant dire que ce genre de type ne peut pas être spécifié ou déclaré, d'ailleurs aucune construction du language Rust ne le permet. Et chaque closure a son type, vous ne pourrez faire un truc du genre:
+```rust
+let extern_var = "Fred".to_string();
+let a = |x| (&extern_var) == x;
+let mut b = |x| (&extern_var) == x;
+
+b = a;
+```
+
+Même si les 2 closures font la même chose et sont écrites de manière exactement identique, le type de la variable `a` est pourtant différent du type de la variable `b` et ceci car en fait les 2 closures sont différente.
+C'est un peut comme le type embarquait aussi la position de la déclaration. Et c'est vraiment le cas, cela explique pourquoi le compilateur nous affiche cette bizarrerie comme type de la closure.
+
+Il est donc impossible de déclarer une variable avec un type closure. Il n'est même pas possible d'assigner une closure à une variable avec un type, aucun type ne pouvant décrire une closure
+Mais une closure étant une fonction, il existe un moyen de déclarer une variable avec un type pouvant recevoir une closure mais uniquement en paramètre ou en retour d'autres fonctions:
+```rust
+// Cette fonction accepte une fonction de signature `fn(String) -> String`
+// donc elle accepte aussi les closures avec cette signatue
+fn do_something_on_string<F: Fn(&str) -> String>(f: F) {
+    println!("The resulted string: `{}`", f("Fred")); 
+}
+
+fn to_upper(s: &str) -> String {
+    s.to_uppercase()
+}
+
+fn main() {
+    do_something_on_string(to_upper);
+    do_something_on_string(|x| "Prefix/".to_string() + x);
+}
+```
+
+En fait, ce type `Fn` est un trait d'où l'écriture de la signature de la fonction `do_something_on_string`.
+Chaque type créé par le compilateur pour chaque closure va implémenter ce trait `Fn`. De même, une fonction (sans environnement) implémente ce trait `Fn`.
+Un peu comme si l'implémentation était définie ainsi:
+```rust
+impl Fn(String) for fn(String) {}
+
+impl Fn(String) -> String for fn(String) -> String {}
+```
+
+Même si c'est syntaxiquement juste, bien évidemment, c'est le compilateur que fait cette implémentation en interne, car il ne peut exister un fichier qui implement une infinité de signature.
+
+
+## Interration d'une closure avec son environnement
+### Modification de l'environnement
+Heureusement pour nous, les closures ne se limitent pas à lire leur environnement, elles peuvent aussi le modifier.
+Mais pour que Rust puisse suivre la gestion des modifications, il faut un nouveau type de closure qui signale que la closure va modifier quelque chose.
+Le type `FnMut` va décrire ce genre de closure:
+```rust
+fn do_something_on_string<F: FnMut(&str) -> String>(mut f: F) {
+    println!("The resulted string: `{}`", f("Fred")); 
+}
+
+let mut registry = vec![];
+
+do_something_on_string(|s| {
+    let r = s.to_string();
+    
+    registry.push(r.clone());
+    r
+});
+
+println!("The list: {:?}", registry);
+```
+
+Il est à noté qu'un paramètre de fonction de type `FnMut` doit être déclaré mutable (`mut`), comme ici le paramètre `f` de la fonction `do_something_on_string` (à la première ligne).
+C'est ainsi en Rust, car lorsque la closure est appelée dans la fonction `do_something_on_string` par `f("Fred")`, l'appel est fait par une référence mutable (`&mut FnMut`) au même titre que l'appel de méthode `push` du vecteur (`Vec<String>`).
+
+
+### Capturer des variables qui seront détruites
+Il arrive qu'une valeur de variable qui va capturée dans une closure soit détruite après l'appel de la closure.
+Cela arrive car il y a transfert de possession et c'est toujours à la charge du possesseur de faire le ménage.
+
+En fait, ce n'est pas la closure qui va posséder la variable mais le contexte lorsque la closure va être appelée, ce sera donc l'environnement d'éxecution du corps de la closure.
+Ce qui fait qu'à chaque appel de la closure, la valeur de la variable capturée sera forcément détruite.
+On voit donc le problème une valeur n'est détruite qu'une seule fois, il faut donc que la closure ne soit appelée qu'une seule fois, si elle était appelée une deuxième fois, ce serait un désastre, car on liberera de la mémoire déjà libérée.
+
+Rust, va donc faire en sorte que ce genre de closure qui capture la possession de la valeur d'une variable ne soit exécutée plusieurs fois,
+le compilateur va refuser les appels multiples de ce genre de closure, on ne pourra même pas l'appeler dans une boucle.
+
+Ce type de closure a donc un nouveau type, qui dit que la closure doit être appelée qu'une fois car une variable est possédée par la closure.
+Ce type est `FnOnce`.
+
+Prenons cet exemple:
+```rust
+fn show_result<F: FnOnce(&str) -> String>(f: F) {
+    println!("Resulted string: {}", f("Fred"))
+}
+
+fn main() {
+    let prefix = "prefix/".to_string();
+
+    show_result(|s| prefix + s);
+}
+```
+
+La possession de la valeur de la variable `prefix` dans la fonction `main` a été transféré à la closure. Et lorsqu'elle est exécutée dans la fonction `show_result`, la valeur sera détruite.
+C'est pour cela que la closure ne peut être appelée plusieurs fois.
+
+
+### Hiérarchie des types de fonctions
+Les 3 traits de fonctions `Fn`, `FnMut`, et `FnOnce` ont une hiérarchie ce qui va faire que:
+- On va pouvoir passer une fonction implémentant `Fn` ou `FnMut` à une fonction accetant un paramètre de type `FnOnce`
+- On va pouvoir passer une fonction implémentant `Fn` à une fonction accetant un paramètre de type `FnMut`
+
+Ceci est possible car `FnOnce` a une exécution plus restreinte que `Fn` et `FnMut` puisque une fonction `FnOnce` ne peut obligatoirement être qu'une seule fois (ça ne dérange pas une `Fn` ou `FnMut` d'être exécuté qu'une seule fois).
+De même, `FnMut` est plus restreinte que `Fn`
+puisque `FnMut` peut modifier son environnement mais comme une fonction `Fn` ne modifie rien elle peut très bien être exécutée dans les conditions de protection offertes par en environnement modifiable.
+
+Contrairement à ce qu'on croit, une lecture seule n'est pas une restriction, c'est la mutation qui va restreindre un traitement car il faut protéger les accès afin d'éviter des modifications simultanées d'une donnée.
+C'est pour cela que dans un environnement protégé de modifications simultanées d'une données, peut très bien se voir exécuter un bout de code qui ne modifie rien.
+
+Ainsi:
+```rust
+fn do_something_readonly<F: Fn(i32)>(f: F) {
+    do_something_mut(f);
+    do_something_once(f);
+}
+
+fn do_something_mut<F: FnMut(i32)>(f: F) {
+    do_something_once(f);
+}
+
+fn do_something_once<F: FnOnce(i32)>(f: F) {
+}
+```
+
+On peut noté que dans la fonction `do_something_readonly` le paramètre `f` sera forcément appelé plusieurs fois, mais pas de problème car la fonction `f` peut le faire,
+l'appel `do_something_once(f)` dit juste que la fonction `f` ne sera appelé qu'une seule fois à cause de son paramètre `FnOnce`, ainsi on peut très bien avoir ceci:
+```rust
+fn do_something_readonly<F: Fn(i32)>(f: F) {
+    do_something_once(f);
+    do_something_once(f);
+    do_something_once(f);
+}
+```
+
+Par contre ceci serait interdit:
+```rust
+fn do_other<F: FnOnce(i32)>(f: F) {
+    do_something_once(f);
+    do_something_once(f); // Interdit car la fonction `f` a déjà été appelé
+    do_something_once(f); // Pareil ici
+}
+```
+
+Car ce coup-ci, le paramètre est une fonction `FnOnce`.
+La vérification est faite par le compilateur et non pas à l'éxecution et puisque cette vérification n'est pas faire au runtime, le code compilé est optimal.
+
+En résumant cette hiérarchie, c'est comme si les traits étaient définis ainsi:
+```rust
+trait FnOnce(i32): FnMut(i32) {}
+
+trait FnMut(i32): Fn(i32) {}
+
+// Pour les fonctions sans environnement, elles implementent le trait `Fn`
+impl Fn(i32) for fn(i32) {}
+```
+
+Attention, les types `i32` indiqués ici sont à titre d'exemple et pour simplifier car il existe une infinité de signature de fonction, il faut voir plus cela en terme générique (`Fn(A, B, C, ...) -> R`).
+
+On peut alors dire que `FnOnce` est une spécialisation de `FnMut`, reformulé, `FnMut` est parent de `FnOnce`,
+et donc qu'une fonction `FnMut` est une fonction `FnOnce`, ce qui fait qu'une fonction `FnMut` peut être appelée comme une fonction `FnOnce`, d'où l'appel de `f` dans `do_something_mut`.
+
+De même dire aussi que `FnMut` est une spécialisation de `Fn`, reformulé `Fn` est parent de `FnMut`,
+et donc qu'une fonction `Fn` est une fonction `FnMut`, ce qui fait qu'une fonction `Fn` peut être appelée comme une fonction `FnMut`, d'où l'appel de `f` dans `do_something_readonly`.
+
+Quant aux fonction sans environnement, les fonctions de type `fn`, elle implementent le trait `Fn` puisque dans environnement, elle sont des fonction dont l'appel ne modifient pas leur environnement.
+
+Voici un diagramme, qui résume cette hiérarchie.
+
+
+## Une fonction imbriquée n'est pas une closure
+Même si une closure semble être une fonction imbriquée dans une autre, il y a 2 différence fondamentale.
+1. Une fonction (sous-entendu sans environnement), même imbriquée n'enbarque pas l'environnement externe à sa déclaration.
+2. 2 fonctions (sans environnement) avec la même signature, même imbriquées, auront le même type `fn`, alors on l'a dire 2 closures auront chacune leur propre type.
+
+
+# Multithread
+- Rust va interdire:
+    - que 2 threads modifient une même donnée
+    - qu'une valeur qui n'est plus utilisée ou nettoyée ne soit modifiée
+Tout ce ceci évite à 100% les conflits de données
+- Rust garantit une programmation multithread 100% sûre (safe):
+    - Même si la partie qui crée les threads sont dans une lib (comme les framework web), toute les développements qui utilise cette lib ne seront pas obliger à assurer la concurence d'accès aux données.
+    Rust le fait naturellement, ce n'est pas à ajouter.
+    - Pas de besoin de faire une version thread-safe d'un objet, en Rust tout est naturellement thread-safe.
+    En Java à des tableaux associatifs (`java.util.HashMap`) comme Vector qui ne sont pas thread-safe.
+    Oracle a dû introduire une version thread-safe pour leur collections, pour les tableaux associatifs il faut utiliser `java.util.concurrent.ConcurrentHashMap`.
+    Les 2 versions (thread-safe et classique) co-existent dans la bibliothèque standard de Java.
+    En Rust, il est impossible de développer quelque chose qui n'est pas thead-safe.
+    
 
 # Méthode
 - Les appels de méthodes sur les littéraux doivent être typés car la même méthode aura un traitement différent en fonction du type:
@@ -256,3 +798,54 @@ Cela éviter de poluer le code avec des variables qu'on utilise plus.
     - `let x: [u8; 5] = [0; 5];` est autorisé
     - `let x: [u8; 5] = [0, 5];` est interdit, il manque à initialiser les 3 dernières valeurs, seule 2 valeurs sur 5 sont initialisées
 
+# Textes (Strings)
+- **Page 57/58**: séquence d'échappement
+- La chaine standart peut contenir les séquences d'échappement:
+    - Codes ASCII: `\x00`
+    - Codes Unicode: `\U{000000}`
+- Une chaine peut être définie sur plusieurs lignes:
+```rust
+let s = "Bonjour Monsieur,
+je voudrais vous demanders cela,
+Merci.";
+```
+
+Un backslash à la fin de la ligne évide d'ajouter un retour la ligne «\n» dans la chaine:
+```rust
+let s1 = "A
+B
+C";
+
+let s2 = "A\
+B\
+C";
+
+assert_eq!(s1, "A\nB\nC");
+assert_eq!(s2, "ABC");
+```
+- Définition d'une chaine brute: `r""`
+La chaine brute désactive l'interprétation des séquences d'échappement comme de retour à la ligne `\n`: `assert_eq(r"\", "\\")`
+Les chaines brutes sont utiles pour les expressions régulières:
+```rust
+let number_pattern = Regex::new(r"\d+(\.\d+)*");
+```
+et pour les chemins de fichiers Windows:
+```rust
+let filename = r"C:\Program Files\Gorillas";
+```
+- Avec les chaines brutes, le seul moyen de mettre des guillements dans la chaine est de mettre un délimiteur composé d'un certain nombre de caractères dièse (`#`) avant le guillemet de début
+et avec le même nombre de dièses après le guillemet de fermeture: `r#"texte: "bonjour"."#`
+
+
+# Fonction main
+fn main() -> Result<T, E> {
+}
+
+>>>>>>>
+apachebench
+temps accès base de données 5ms
+2000000-5000000 connexion > 
+  - ecriture de fichier
+  - while 1000 itérations
+> état de mémoire
+> limite écroulement
