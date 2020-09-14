@@ -739,6 +739,7 @@ et donc qu'une fonction `Fn` est une fonction `FnMut`, ce qui fait qu'une foncti
 Quant aux fonction sans environnement, les fonctions de type `fn`, elle implementent le trait `Fn` puisque dans environnement, elle sont des fonction dont l'appel ne modifient pas leur environnement.
 
 Voici un diagramme, qui résume cette hiérarchie.
+[![Hiérarchie des types de fonction](https://raw.githubusercontent.com/corebreaker/rust-book/e20a1abeb2c58d891d7dd45b32592b626645de1e/images/rust-book-001.png?token=ACKYCCXD7MUAMBCRJQMQ4ES7LXCWI)](https://raw.githubusercontent.com/corebreaker/rust-book/e20a1abeb2c58d891d7dd45b32592b626645de1e/images/rust-book-001.png?token=ACKYCCXD7MUAMBCRJQMQ4ES7LXCWI)
 
 
 ## Une fonction imbriquée n'est pas une closure
