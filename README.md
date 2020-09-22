@@ -162,15 +162,23 @@ Le code 2 compile aussi mais avec un warning disant que la variable `x` n'a pas 
 
 
 ## Variables statiques
-- Les variables globalen existent en Rust mais elle sont constantes. Elle sont largement déconseillées. Ainsi elle ne sont que très rarement utilisées.
+- Les variables globales existent en Rust mais elle sont constantes. Elle sont largement déconseillées. Ainsi elle ne sont que très rarement utilisées.
 - C'est comme en Python, il n'existe pas de variable globale au niveau du programme, car étant déclarées dans un module, ce sont en fait, des variables «locales» à un module,
 c'est pour cela qu'en Rust on les appelles statiques à la place de globales.
 - Il faut comprendre qu'une variable globale est commune à toutes les fonctions déclarées dans un module.
 - Contrairement aux variables locales, on doit indiquer le type d'une variable globale.
-- Les variables globales se déclarent avec le mot-clé `static`:
+- Les variables globales se déclarent avec:
+    - le mot-clé `static`:
 ```rust
 static my_global: u32 = 1234;
 ```
+    - le mot-clé `const`:
+```rust
+const my_global: u32 = 1234;
+```
+- Dans tous les cas, le type doit être spécifié dans une déclaration d'une variable globale
+- 
+ 
 
 
 # Conventions
