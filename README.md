@@ -4,11 +4,13 @@
 - Code source du livre: https://github.com/ProgrammingRust
 - Le trait `Drop` ne définit pas le comportement de libération de la mémoire, mais celui de l'abandon de possession, l'objet n'a plus de possesseur lorsque la méthode `drop` est appelée
 
-# Install
+
+# Installation
 - Il est conseillé de suivre l'installation par Rustup (https://rustup.rs)
    - ***TODO:*** procédure d'installation
 - Plus d'outils offert par rapport à une installation par les gestionnaires de package (APT, Brew, ...), donc rustup fourni un environnement de dev plus récent et plus complet
 - Mise à jour: `rustup update`
+
 
 # Nouveau projet
 Binaire:
@@ -21,8 +23,110 @@ ou
 Bibliothèque:
 - TODO: commande pour une lib
 
-# Mut
-Un argument `mut` (mutable) ne veut pas dire que la valeur va modifiée après l'appel de la fonction, ce n'est pas un passage par référence
+
+# Compile
+- `assert_debug` peut permettre de faire des test d'ingérité en phase de dev et qui ne seront pas inclut dans la release en production
+- La commande `cargo` se lance dans n'importe quel sous-répertoire du projet
+- `cargo build --release`
+
+
+# Documentation
+- Docs sur le net: https://www.rust-lang.org/learn
+- Doc en local `rustup doc`
+
+
+# Exercices
+- https://github.com/rust-lang/rustlings/
+
+
+# Présentation des valeurs et la notion objet
+....déclaration....
+....présentation des traits... 
+à l'exception des boucles toutes les instructions sont des expressions
+
+
+# Variables et possession (ownership)
+- Une variable a toujours un seul type, si une expression peut avoir plusieurs valeurs, comme avec le bloc `if`, chaque alternative doit avoir le même type:
+```rust
+let x = if condition {
+    123u8 // Type u8
+} else {
+    0 // Ce sera obligatoirement du type u8
+};
+```
+
+- Les variables sont au sens large un emplacement sur la pile (stack), que ce soit une simple variable locale ou globales, un argument de fonction mais aussi dans une variante de l'expression `match`
+- Les variables doivent toujours être initialisées avant son utilisation, même si l'initialisation est différée dans un block `if/else` ou un autre type de bloc:
+```rust
+let my_var;
+
+if condition {
+    my_var = 123;
+} else {
+    my_var = 0;
+}
+```
+
+Il est évident que l'alternative `else` est nécessaire, sinon la variable `my_var` ne serait pas initialisée.
+Bien que cette manière de faire, on préfèrera cette manière de faire qui est plus lisible:
+```rust
+let my_var = if condition {123} else {0};
+```
+
+- Une variable possède sa valeur, et si sa valeur n'est plus accessible, elle est détruite.
+- Une variable ne possède qu'une seule valeur à la fois, s'il y a plusieurs valeurs c'est que la valeur possédée par la variable est un conteneur (Tuple, Array, Vecteur, HashMap, etc.), et dans ce cas chaque valeur est possédée par le conteneur.
+- A l'inverse, une valeur ne peut être possédée que par une seule variable à la fois, c'est le principe de base de la gestion de la mémoire faite par Rust.
+
+- Il existe une possibilité de gérer la possession pour qu'elle soit distribuée sur plusieurs variable un utilisant:
+    - Le type `std::rc::Rc` pour du code en dehors d'un contexte multithread
+    - Le type `std::sync::Arc` pour du code utilisé dans un contexte multithread
+C'est ce genre de type qui va réellement posséder une valeur, il exploite un compteur de référence pour savoir quand la valeur possédée doit être détruite.
+
+- L'assignation d'une valeur à une variable transfère la possession à la variable:
+```
+let a = 123; // La variable `a` possède la valeur `123` 
+let b = 0; // La variable `v` possède la valeur `0` 
+
+let mut x = a; // la valeur 123 est maintenant possédée par la variable `x`
+x = b; // la valeur 0 est maintenant possédée par la variable `x`
+```
+    - Lorsque la valeur `123` est possédée par la variable `x`, la variable `a` devient non-initialisée, il ne faut donc pas l'utiliser sinon le compilateur vous enverra un message d'erreur de compilation.
+    - Lorsque la valeur `0` est possédée par la variable `x`, la variable `b` devient non-initialisée mais aussi la valeur `123` est détruite.
+
+- Pour les types copiants (implémentant le trait Copy), il n'y a pas de transfert de possession; c'est le cas des types primitif (`i8`, `i16`, `u32`, `usize`, etc.),
+car la valeur est copiée est c'est la copie que la nouvelle variable va posséder.
+- Un type ne peut être un type copiant s'il a besoin d'un traitement pour libérer une valeur, c'est le cas des vecteurs qui ont besoin de libérer l'espace mémoire nécessaire pour stocker chaque valeur qu'il contient,
+ou comme un fichier qui a besoin de fermet le fichier avant de détruire l'objet fichier.
+- Pour créer un nouveau type copiant (type personalisé), il faut que chaque elément qu'il aggrège ait pour type un type copiant
+
+- Le transfert de possession peut aussi se faire par le passage d'un paramètre de fonction, par retour d'une fonction
+**Page 89**
+
+- Le transfert de possession peut se faire dans un bloc `if` et ainsi rendre une variable non-initialisée
+**Page 92**
+
+- La possession des valeurs d'une collection est transférée dans la variable d'itération d'une boucle, donc chaque valeur sera détruite à chaque itération.
+- Il aussi un tranfert de possession du conteneur dans la boucle, et le conteur est alors détruit à la sortie de la boucle.
+- **Page 95** déplacement de value -> changer le type pour permettre d'avoir des valeur vides
+
+- **Todo** variable shadowing: 
+let x = 123;
+let x = x.to_string();
+
+
+## Mutatibilité par le mot clé `mut`
+- Une variable est par défaut immuable, on ne peut pas la réassigner
+- Une valeur est par défaut immuable, on ne peut pas changer son contenu en mémoire
+- Pour pouvoir réassigner une variable ou pour pouvoir changer le contenu en mémoire d'une valeur, il faut qu'une valeur soit déclarée mutable et se fait avec le mot clé `mut` que l'on place avant l'identifiant de la variable:
+```rust
+let mut x = 123; // La variable va pouvoir être réassignée
+let mut v = vec![]; // Cette variable va permettre d'appeler des méthodes du vecteur pour le modifier
+
+x = 0; // Ok, car la variable `x` est mutable;
+v.push(x); // Ok, car la variable `v` est mutable, on peut donc modifier le contenu du vecteur
+```
+
+- Un argument `mut` (mutable) ne veut pas dire que la valeur va modifiée après l'appel de la fonction, ce n'est pas un passage par référence
 La fonction
 ```rust
 fn f(mut n: i64) -> i64 {
@@ -47,20 +151,32 @@ println("Valeur: {}", f(x));
 println("Après: {}", x);
 ```
 
-Le code 1 compile mais le code 2 compile aussi mais un warning disant que la variable `x` n'a pas besoin d'être mutable ce qui prouve bien qu'elle n'est pas modifiée.
+Le code 1 compile.
+Le code 2 compile aussi mais avec un warning disant que la variable `x` n'a pas besoin d'être mutable ce qui prouve bien qu'elle n'est pas modifiée.
 
-# Compile
-- `assert_debug` peut permettre de faire des test d'ingérité en phase de dev et qui ne seront pas inclut dans la release en production
-- La commande `cargo` se lance dans n'importe quel sous-répertoire du projet
-- `cargo build --release`
 
-# Documentation
-- Doc en local `rustup doc`
+## Types immuables
+- Certains types n'ont pas de méthode qui vont modifier leur valeur, il sont immuables.
+- Mais la variable peut cependant être ré-assignée, c'est pour cela que le mot clé `mut` et tout de même nécessaire.
+- C'est le cas d'une valeur entière, sa valeur intrinsèque ne peut être modifiée mais on peut assigner une autre valeur à la variable qui la possède.
 
-# Variables
-- Les variables doivent être initialisées
+
+## Variables statiques
+- Les variables globalen existent en Rust mais elle sont constantes. Elle sont largement déconseillées. Ainsi elle ne sont que très rarement utilisées.
+- C'est comme en Python, il n'existe pas de variable globale au niveau du programme, car étant déclarées dans un module, ce sont en fait, des variables «locales» à un module,
+c'est pour cela qu'en Rust on les appelles statiques à la place de globales.
+- Il faut comprendre qu'une variable globale est commune à toutes les fonctions déclarées dans un module.
+- Contrairement aux variables locales, on doit indiquer le type d'une variable globale.
+- Les variables globales se déclarent avec le mot-clé `static`:
+```rust
+static my_global: u32 = 1234;
+```
+
 
 # Conventions
+- Les noms des types sont en camel case majuscule
+- Les noms des variables et des fonctions (y compris les méthodes) sont en snake case minuscule
+
 
 # Expressions
 - La méthode `unwrap` d'un résultat (`Result`) peut être utilisées pour pouvoir compiler sans erreur lorsqu'on ne veut pas utilisé le résultat, que ce soit la valeur ou l'errur.
@@ -76,6 +192,7 @@ Voici l'équivalent en Rust
     let i = if x { y } else { z };
 ```
 - Avec les `if` et `match` sous forme d'expressions Rust nous oblige à traiter tous les cas
+
 
 # Types
 **Page 49**
@@ -128,7 +245,8 @@ En Rust, les variables, les types et les variables sont plus clair. Pour les acc
     - `0x12_3d_56_af` ou `0x_123d_56af` au lieu de `0x123d56af` pour la notation hexadécimale
     - `1_i64` au lieu de `1i64` pour le suffixe de type
 
-# Cast
+
+## Cast
 - **Page 53/54**
 - `false as i32` -> `0` (`bool as T` avec `T` un type numérique est autorisé)
 - `0 as bool` -> interdit (`T as bool` avec `T` un type numérique est autorisé)
@@ -149,7 +267,100 @@ let e = 12.3;       // La variable `e` aura le type `f64` par inférence de type
 ```
 - le module `std::convert` sert à faire des conversions automatiques (**TODO**: exemple)
 
-# Tuples
+
+## Pointeur
+- Il existe 3 types de pointeurs:
+    - Référence ou emprunt (borow), il en existe de 2 type
+        - La référence partagée, pour un accès en lecture seule: `&T`
+        - La référence mutable, pour un accès en lecture/modification: `&mut T`
+    - Boite (Box): `Box<T>`
+    - Pointeur brut: `*T`
+- `&x` emprunte une référence sur `x`, la valeur est une adresse en mémoire sur la pile (stack) ou sur le tas (heap), l'adresse qui pointe sur la valeur de `x`
+- `&x` est du type `&T` (comme `&i32`, `&Bobo`, etc.)
+- La référence partagée est un type copiant (trait `Copy`)
+```rust
+let a = &x;
+let b = a; // Il n'y a pas transfert de possession, la référence est copiée, et c'est la copie que possède la variable `b`
+let c = a; // La référence est de nouveau copié, ceci serait impossible avec un type non-copiant
+```
+- Une référence sur une valeurs mutable (simplifiée en nommant cela référence mutable) permet d'emprunter une référence sur une valeur mutable, on initialise une telle variable par l'opérateur `&mut` 
+```rust
+let mut v = vec![];
+let r = &mut v;
+```
+- Sans mettre le mot clé `mut` sur l'opération `&mut`, ainsi avec juste `&`, cela ferait juste un emprunt immuable, et le déréférencement `*r` ne permettrai pas de modifier la valeur même si la valeur référencée, elle est modifiable.
+- Une référence mutable est de type `&mut T` et ce n'est pas un type copiant, il y a donc un transfert de possession à la réassignation d'une variable
+- `*p` récupère la valeur pointée par le pointeur `p`, qu'il soit une référence, une boite (`Box<T>`) ou un pointeur brut
+- Une référence Rust est un pointeur qui ne sera jamais nul, il est impossible d'assigner une valeur nulle à une référence.
+- Il n'y a pas de référence nulle car il n'existe pas de constante pointeur nul comme `NULL` en C, `null` en Java et JS, `None` en Python, ou `nil` en Go.
+- On peut cependant assigner un zéro à un pointeur brut dans du code non-sûr (unsafe) mais ce pointeur brut ne pourra être transformé en référence que grâce à du code unsafe donc impossible à utiliser dans du code Rust sûr. 
+- Si on veut indiquer l'absence de référence (et donc d'objet ou d'élément donné sous forme de référence), il faut utiliser le type `Option<&T>`:
+```rust
+let x: Option<&i32> = None;
+```
+
+- L'existence du type `Option<&T>` évite un mauvaise utilisation d'un pointeur nul et donc les `NullPointerException`, en Rust il n'exite pas d'équivalent au `NullPointerException`, et ça ne se produit jamais tout comme le "Segmentation Fault".
+- Si un éxecutable produit à partir d'un code en Rust produit un "Segmentation Fault", que cela vient de code non-Rust ou du code unsafe.
+- Les pointeurs bruts peuvent être initialisés dans un bloc safe mais il faut obligatoirement lire la valeur pointée dans un bloc unsafe.
+- Les pointeurs bruts sont de type `*T` (*i32, *f64, etc.) et représente un pointeur du langage C,
+il en a les même propriétés, même sur l'arithmétique du pointeur en C (qu'on puisse décaler l'addresse pointer en ajoutant un nombre entier au pointeur).
+
+
+## Tableaux
+- `[T; n]`: Un tableau de taille fixe est alloué sur la pile (stack) par le compilateur, la taille ne peut donc pas être modifiée contrairement à un vecteur qui a une taille variable
+- `Vec<T>`: Un vecteur est une liste de taille variable, l'allocation se fait dynamique au runtime sur le tas (heap)
+- `&[T]`: Une tranche (slice) est un pointeur sur un morceau de tableau, c'est pour cela que c'est déclaré comme une référence sur un tableau sans taile car la taille n'est pas connue à la compilation
+- Tous les type de tableaux ont la méthode `len()`
+- Lors de la récupération d'une valeur, l'index est verifié, on ne peut pas accéder à un tableau avec un index en dehors de ses limites
+- Un index doit être du type `usize`
+- Une initialisation du tableau peut se faire de 2 façons:
+    - `[1, 2, 100]` un tablau de type `[i32; 3]`
+    - `[10u16; 5]` un tableau de type `[u16; 5]` équivalent à l'initialisation `[10u16, 10u16, 10u16, 10u16, 10u16]`
+- Comme pour n'importe quelle déclaration, toutes les valeurs d'un tableau doit être initialisées:
+    - `let x: [u8; 5] = [1, 2, 3, 4, 5];` est autorisé
+    - `let x: [u8; 5] = [0; 5];` est autorisé
+    - `let x: [u8; 5] = [0, 5];` est interdit, il manque à initialiser les 3 dernières valeurs, seule 2 valeurs sur 5 sont initialisées
+
+## Textes (Strings)
+- **Page 57/58**: séquence d'échappement
+- La chaine standart peut contenir les séquences d'échappement:
+    - Codes ASCII: `\x00`
+    - Codes Unicode: `\U{000000}`
+- Une chaine peut être définie sur plusieurs lignes:
+```rust
+let s = "Bonjour Monsieur,
+je voudrais vous demanders cela,
+Merci.";
+```
+
+Un backslash à la fin de la ligne évide d'ajouter un retour la ligne «\n» dans la chaine:
+```rust
+let s1 = "A
+B
+C";
+
+let s2 = "A\
+B\
+C";
+
+assert_eq!(s1, "A\nB\nC");
+assert_eq!(s2, "ABC");
+```
+- Définition d'une chaine brute: `r""`
+La chaine brute désactive l'interprétation des séquences d'échappement comme de retour à la ligne `\n`: `assert_eq(r"\", "\\")`
+Les chaines brutes sont utiles pour les expressions régulières:
+```rust
+let number_pattern = Regex::new(r"\d+(\.\d+)*");
+```
+et pour les chemins de fichiers Windows:
+```rust
+let filename = r"C:\Program Files\Gorillas";
+```
+- Avec les chaines brutes, le seul moyen de mettre des guillements dans la chaine est de mettre un délimiteur composé d'un certain nombre de caractères dièse (`#`) avant le guillemet de début
+et avec le même nombre de dièses après le guillemet de fermeture: `r#"texte: "bonjour"."#`
+
+
+## Tuples
 - Les parenthèses sont obligatoires, ce qui permet d'éviter la confusion lors des appels de fonctions: `f((1, "Voilà"))` à ne pas confondre avec `f(1, "Voilà")` qui change la signature de la fonction
 - Peut avoir une virgule à la fin, c'est même conseillé de la mettre même si en pratique ce n'est jamais fait car cela permet d'ajouter des éléments par copier-coller
 - La virgule supplémentaire est nécessaire pour les tuples de taille 1:
@@ -158,8 +369,9 @@ let e = 12.3;       // La variable `e` aura le type `f64` par inférence de type
 - Le type unité est un tuple vide: `()`, sa valeur s'écrit aussi `()`
 - La type unité équivaut au type `void` de Java, C/C++ mais à la différence que le type unité en Rust a aussi une valeur
 contrairement au type `void` des autres language qui lui n'a pas de valeur et donc pas de littéral pour une valeur qui serait dans ce type `void`
-    
-# Erreurs
+
+
+## Erreurs
 - ***TODO:*** faire une macro try/catch
 - Le type `Option<T>` est vraiment utile et synthétique pour vérifier une valeur vide en retour d'une opération.
 Par exemple C, il faut passer un pointeur en paramètre de la fonction et vérifier la valeur de retour, il y a donc 2 informations:
@@ -739,7 +951,7 @@ et donc qu'une fonction `Fn` est une fonction `FnMut`, ce qui fait qu'une foncti
 Quant aux fonction sans environnement, les fonctions de type `fn`, elle implementent le trait `Fn` puisque dans environnement, elle sont des fonction dont l'appel ne modifient pas leur environnement.
 
 Voici un diagramme, qui résume cette hiérarchie.
-[![Hiérarchie des types de fonction](https://raw.githubusercontent.com/corebreaker/rust-book/e20a1abeb2c58d891d7dd45b32592b626645de1e/images/rust-book-001.png?token=ACKYCCXD7MUAMBCRJQMQ4ES7LXCWI)](https://raw.githubusercontent.com/corebreaker/rust-book/e20a1abeb2c58d891d7dd45b32592b626645de1e/images/rust-book-001.png?token=ACKYCCXD7MUAMBCRJQMQ4ES7LXCWI)
+[![Hiérarchie des types de fonction](https://github.com/corebreaker/rust-book/blob/master/images/rust-book-001.png?raw=true)](https://github.com/corebreaker/rust-book/blob/master/images/rust-book-001.png?raw=true)
 
 
 ## Une fonction imbriquée n'est pas une closure
@@ -769,73 +981,6 @@ Tout ce ceci évite à 100% les conflits de données
     - Cela évite aussi une telle écriture: `2.5.pow(4)`, 4 pourrait compris comme un champ de l'objet `2` 
 - Les appels de méthodes sont prioritaires devant les opérateurs donc:
     - `-2u16.abs()` vaut `-2u16`, il faut écrire `(-2u16).abs()` pour valoir `2u16`
-    
-# Pointeur
-- 3 types de pointeurs:
-    - Référence: `&T`
-    - Boite (Box): `Box<T>`
-    - Pointeur brut: `*T`
-- `&x` emprunte une référence sur `x`, la valeur est une adresse en mémoire sur la pile (stack) ou sur le tas (heap), l'adresse qui pointe sur la valeur de `x`
-- `&x` est du type `&T` (comme `&i32`, `&Bobo`, etc.)
-- `*p` récupère la valeur pointée par le pointeur `p`, qu'il soit une référence, une boite ou un pointeur brut
-- Une référence Rust est un pointeur qui ne sera jamais nul, il est impossible d'assigner une valeur nulle à une référence
-- Il n'y a pas de référence nulle car il n'existe pas de littéral comme en `NULL` en C, `null` en Java et JS, `None` en Python, ou `nil` en Go
-- Si on veut indiquer l'absence de référence (et donc d'objet ou d'élément donné sous forme de référence), il faut utiliser le type `Option<&T>` (**TODO** mettre un exemple)
-- L'existence du type `Option<&T>` évite un mauvaise utilisation d'un pointeur nul et donc les `NullPointerException`
-- Les pointeurs bruts peuvent être initiasés dans un bloc safe mais il faut obligatoirement lire la valeur pointée dans un bloc unsafe
-
-# Tableaux
-- `[T; n]`: Un tableau de taille fixe est alloué sur la pile (stack) par le compilateur, la taille ne peut donc pas être modifiée contrairement à un vecteur qui a une taille variable
-- `Vec<T>`: Un vecteur est une liste de taille variable, l'allocation se fait dynamique au runtime sur le tas (heap)
-- `&[T]`: Une tranche (slice) est un pointeur sur un morceau de tableau, c'est pour cela que c'est déclaré comme une référence sur un tableau sans taile car la taille n'est pas connue à la compilation
-- Tous les type de tableaux ont la méthode `len()`
-- Lors de la récupération d'une valeur, l'index est verifié, on ne peut pas accéder à un tableau avec un index en dehors de ses limites
-- Un index doit être du type `usize`
-- Une initialisation du tableau peut se faire de 2 façons:
-    - `[1, 2, 100]` un tablau de type `[i32; 3]`
-    - `[10u16; 5]` un tableau de type `[u16; 5]` équivalent à l'initialisation `[10u16, 10u16, 10u16, 10u16, 10u16]`
-- Comme pour n'importe quelle déclaration, toutes les valeurs d'un tableau doit être initialisées:
-    - `let x: [u8; 5] = [1, 2, 3, 4, 5];` est autorisé
-    - `let x: [u8; 5] = [0; 5];` est autorisé
-    - `let x: [u8; 5] = [0, 5];` est interdit, il manque à initialiser les 3 dernières valeurs, seule 2 valeurs sur 5 sont initialisées
-
-# Textes (Strings)
-- **Page 57/58**: séquence d'échappement
-- La chaine standart peut contenir les séquences d'échappement:
-    - Codes ASCII: `\x00`
-    - Codes Unicode: `\U{000000}`
-- Une chaine peut être définie sur plusieurs lignes:
-```rust
-let s = "Bonjour Monsieur,
-je voudrais vous demanders cela,
-Merci.";
-```
-
-Un backslash à la fin de la ligne évide d'ajouter un retour la ligne «\n» dans la chaine:
-```rust
-let s1 = "A
-B
-C";
-
-let s2 = "A\
-B\
-C";
-
-assert_eq!(s1, "A\nB\nC");
-assert_eq!(s2, "ABC");
-```
-- Définition d'une chaine brute: `r""`
-La chaine brute désactive l'interprétation des séquences d'échappement comme de retour à la ligne `\n`: `assert_eq(r"\", "\\")`
-Les chaines brutes sont utiles pour les expressions régulières:
-```rust
-let number_pattern = Regex::new(r"\d+(\.\d+)*");
-```
-et pour les chemins de fichiers Windows:
-```rust
-let filename = r"C:\Program Files\Gorillas";
-```
-- Avec les chaines brutes, le seul moyen de mettre des guillements dans la chaine est de mettre un délimiteur composé d'un certain nombre de caractères dièse (`#`) avant le guillemet de début
-et avec le même nombre de dièses après le guillemet de fermeture: `r#"texte: "bonjour"."#`
 
 
 # Fonction main
